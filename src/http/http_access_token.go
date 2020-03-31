@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/fvukojevic/bookstore_oauth-api/src/domain/access_token"
+	"github.com/fvukojevic/bookstore_oauth-api/src/services"
 	"github.com/fvukojevic/bookstore_oauth-api/src/utils/errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -13,10 +14,10 @@ type AccessTokenHandler interface {
 }
 
 type accessTokenHandler struct {
-	service access_token.Service
+	service services.Service
 }
 
-func NewHandler(service access_token.Service) AccessTokenHandler {
+func NewHandler(service services.Service) AccessTokenHandler {
 	return &accessTokenHandler{
 		service: service,
 	}
