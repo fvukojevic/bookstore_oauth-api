@@ -4,10 +4,19 @@ import (
 	"github.com/fvukojevic/bookstore_oauth-api/src/clients/cassandra"
 	"github.com/fvukojevic/bookstore_oauth-api/src/domain/access_token"
 	"github.com/fvukojevic/bookstore_oauth-api/src/utils/errors"
+	"github.com/gocql/gocql"
+)
+
+const (
+	queryGetAccessToken    = "SELECT access_token, user_id, client_id, expires FROM access_tokens WHERE access_token = ?;"
+	queryCreateAccessToken = "INSERT INTO access_tokens(access_token, user_id, client_id, expires) VALUES(?, ?, ?, ?);"
+	queryUpdateAccessToken = "UPDATE access_tokens SET expires = ? WHERE access_token = ?;"
 )
 
 type DbRepository interface {
-	GetById(string) (*access_token.AccessToken, *errors.RestErr)
+	GetById(id string) (*access_token.AccessToken, *errors.RestErr)
+	Create(token access_token.AccessToken) *errors.RestErr
+	UpdateExpirationTime(token access_token.AccessToken) *errors.RestErr
 }
 
 type dbRepository struct {
@@ -18,13 +27,57 @@ func NewRepository() DbRepository {
 }
 
 func (r *dbRepository) GetById(id string) (*access_token.AccessToken, *errors.RestErr) {
-	// TODO: implement access token from cassandra db
-
 	session, err := cassandra.GetSession()
 	if err != nil {
-		panic(err)
+		return nil, errors.NewInternalServerError(err.Error())
 	}
 	defer session.Close()
 
-	return nil, errors.NewInternalServerError("database connection not implementet yet")
+	var token access_token.AccessToken
+	if err := session.Query(queryGetAccessToken, id).Scan(
+		&token.AccessToken,
+		&token.UserId,
+		&token.ClientId,
+		&token.Expires); err != nil {
+		if err == gocql.ErrNotFound {
+			return nil, errors.NewNotFoundError("no access found for given id")
+		}
+		return nil, errors.NewInternalServerError(err.Error())
+	}
+
+	return &token, nil
+}
+
+func (r *dbRepository) Create(token access_token.AccessToken) *errors.RestErr {
+	session, err := cassandra.GetSession()
+	if err != nil {
+		errors.NewInternalServerError(err.Error())
+	}
+	defer session.Close()
+
+	if err := session.Query(queryCreateAccessToken,
+		token.AccessToken,
+		token.UserId,
+		token.ClientId,
+		token.Expires).Exec(); err != nil {
+		return errors.NewInternalServerError(err.Error())
+	}
+
+	return nil
+}
+
+func (r *dbRepository) UpdateExpirationTime(token access_token.AccessToken) *errors.RestErr {
+	session, err := cassandra.GetSession()
+	if err != nil {
+		errors.NewInternalServerError(err.Error())
+	}
+	defer session.Close()
+
+	if err := session.Query(queryUpdateAccessToken,
+		token.Expires,
+		token.AccessToken).Exec(); err != nil {
+		return errors.NewInternalServerError(err.Error())
+	}
+
+	return nil
 }
