@@ -82,6 +82,6 @@ func (token AccessToken) IsExpired() bool {
 	return now.After(expirationTime)
 }
 
-func (at *AccessToken) Generate() {
-	at.AccessToken = crypto_utils.GetMd5(fmt.Sprintf("at-%d-%d-ran", at.UserId, at.Expires))
+func (token *AccessToken) Generate() {
+	token.AccessToken = crypto_utils.GetMd5(fmt.Sprintf("at-%d-%d-ran", token.UserId, token.Expires))
 }
