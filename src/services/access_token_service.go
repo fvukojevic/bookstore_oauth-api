@@ -3,7 +3,7 @@ package services
 import (
 	"github.com/fvukojevic/bookstore_oauth-api/src/domain/access_token"
 	"github.com/fvukojevic/bookstore_oauth-api/src/repository/rest"
-	"github.com/fvukojevic/bookstore_oauth-api/src/utils/errors"
+	"github.com/fvukojevic/bookstore_util-go/utils/errors"
 	"strings"
 )
 
