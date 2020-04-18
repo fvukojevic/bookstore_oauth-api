@@ -37,13 +37,12 @@ func (rup restUserRepository) LoginUser(email string, password string) (*users.U
 	}
 
 	if response.StatusCode > 299 {
-		var restErr errors.RestErr
-		err := json.Unmarshal(response.Bytes(), &restErr)
+		apiErr, err := errors.NewRestErrorFromBytes(response.Bytes())
 		if err != nil {
 			return nil, errors.NewInternalServerError("invalid error interface when trying to login user")
 		}
 
-		return nil, &restErr
+		return nil, apiErr
 	}
 
 	var user users.User
